@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segmented Image Coloring</title>
+    <style>
+        body {
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            background-color: #eef1f7;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            width: 60px;
+            background: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 10px 0;
+        }
+
+        .sidebar button, .upload-label {
+            width: 40px;
+            height: 40px;
+            margin: 10px 0;
+            border: 2px solid white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 20px;
+            background: none;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .sidebar button:hover, .upload-label:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .upload-label input {
+            display: none;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-left: 80px;
+            overflow: hidden;
+        }
+
+        #border-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 80%;
+            max-height: 80%;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #image-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            width: 250px;
+            background: #ecf0f1;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+        }
+
+        .section {
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .section h3 {
+            background: #3498db;
+            color: white;
+            margin: 0;
+            padding: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .section h3:hover {
+            background: #2980b9;
+        }
+
+        .section-content {
+            display: none;
+            padding: 10px;
+            flex-wrap: wrap;
+            transition: max-height 0.3s ease-in-out;
+        }
+
+        .color-container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .texture-tile {
+            width: 60px;
+            height: 60px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, border 0.2s;
+            position: relative;
+            flex-direction: column;
+        }
+
+        .texture-name {
+            font-size: 12px;
+            color: black;
+            text-align: center;
+            width: 100%;
+            position: absolute;
+            bottom: -20px;
+        }
+
+        .texture-tile:hover {
+            transform: scale(1.1);
+            border: 2px solid black;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 5px;
+        }
+
+        .color-input {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Left Sidebar -->
+    <div class="sidebar">
+        <label class="upload-label">
+            ➕
+            <input type="file" id="upload-btn" accept="image/*">
+        </label>
+        <button id="undo-btn" disabled>⏪</button>
+        <button id="download-btn">💾</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div id="border-container">
+            <div id="image-container">
+                <img id="original-image" style="display: none;">
+                <canvas id="mask-canvas"></canvas>
+                <canvas id="hover-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel">
+        <!-- Color Picker Section -->
+        <div class="section">
+            <h3>Color Picker</h3>
+            <div class="section-content">
+                <input type="color" id="color-picker" value="#ff0000" class="color-input">
+            </div>
+        </div>
+
+        <!-- Texture Section -->
+        <div class="section">
+            <h3>Textures</h3>
+            <div class="section-content color-container">
+                <div class="texture-tile" style="background: url('texture1.jpg'); background-size: cover;">
+                    <span class="texture-name">Brick</span>
+                </div>
+                <div class="texture-tile" style="background: url('texture2.jpg'); background-size: cover;">
+                    <span class="texture-name">Wood</span>
+                </div>
+                <div class="texture-tile" style="background: url('texture3.jpg'); background-size: cover;">
+                    <span class="texture-name">Marble</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wallpaper Section -->
+        <div class="section">
+            <h3>Wallpapers</h3>
+            <div class="section-content color-container">
+                <div class="texture-tile" style="background: url('wallpaper1.jpg'); background-size: cover;">
+                    <span class="texture-name">Floral</span>
+                </div>
+                <div class="texture-tile" style="background: url('wallpaper2.jpg'); background-size: cover;">
+                    <span class="texture-name">Abstract</span>
+                </div>
+                <div class="texture-tile" style="background: url('wallpaper3.jpg'); background-size: cover;">
+                    <span class="texture-name">Minimal</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll(".section h3").forEach(header => {
+            header.addEventListener("click", () => {
+                const content = header.nextElementSibling;
+                content.style.display = content.style.display === "block" ? "none" : "block";
+            });
+        });
+
+        const uploadBtn = document.getElementById("upload-btn");
+        const colorPicker = document.getElementById("color-picker");
+        const undoBtn = document.getElementById("undo-btn");
+        const downloadBtn = document.getElementById("download-btn");
+        const originalImage = document.getElementById("original-image");
+        const maskCanvas = document.getElementById("mask-canvas");
+        const hoverCanvas = document.getElementById("hover-canvas");
+        const ctx = maskCanvas.getContext("2d");
+        const hoverCtx = hoverCanvas.getContext("2d");
+
+        let masks = [];
+        let maskColors = {}; // Stores colors for each selected segment
+        let colorHistory = []; // Stores selection history for undo
+
+        uploadBtn.addEventListener("change", async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append("image", file);
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalImage.src = e.target.result;
+                originalImage.style.display = "block";
+            };
+            reader.readAsDataURL(file);
+
+            const response = await fetch("http://127.0.0.1:5000/test", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            console.log(data);
+            masks = data.segments.map(base64 => {
+                const img = new Image();
+                img.src = "data:image/png;base64," + base64;
+                return img;
+            });
+
+            Promise.all(masks.map(img => new Promise(resolve => img.onload = resolve)))
+                .then(() => {
+                    maskCanvas.width = hoverCanvas.width = originalImage.width;
+                    maskCanvas.height = hoverCanvas.height = originalImage.height;
+                    ctx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+                    hoverCtx.clearRect(0, 0, hoverCanvas.width, hoverCanvas.height);
+                    maskColors = {};
+                    colorHistory = [];
+                    undoBtn.disabled = true;
+                });
+        });
+
+        hoverCanvas.addEventListener("click", (e) => {
+            const rect = hoverCanvas.getBoundingClientRect();
+            const scaleX = originalImage.naturalWidth / hoverCanvas.width;
+            const scaleY = originalImage.naturalHeight / hoverCanvas.height;
+            
+            const x = Math.floor((e.clientX - rect.left) * scaleX);
+            const y = Math.floor((e.clientY - rect.top) * scaleY);
+
+            for (let i = 0; i < masks.length; i++) {
+                const maskCtx = document.createElement("canvas").getContext("2d");
+                maskCtx.canvas.width = originalImage.naturalWidth;
+                maskCtx.canvas.height = originalImage.naturalHeight;
+                maskCtx.drawImage(masks[i], 0, 0, maskCtx.canvas.width, maskCtx.canvas.height);
+
+                const maskData = maskCtx.getImageData(x, y, 1, 1).data;
+                if (maskData[3] > 0) {
+                    maskColors[i] = colorPicker.value; // Store color for the clicked mask
+                    colorHistory.push(i); // Save history for undo
+                    undoBtn.disabled = false; // Enable undo button
+                    updateSelectedMasks();
+                    return;
+                }
+            }
+        });
+
+        function updateSelectedMasks() {
+            hoverCtx.clearRect(0, 0, hoverCanvas.width, hoverCanvas.height);
+
+            Object.keys(maskColors).forEach(index => {
+                const maskIndex = parseInt(index);
+                const selectedMask = masks[maskIndex];
+
+                const tempCanvas = document.createElement("canvas");
+                tempCanvas.width = hoverCanvas.width;
+                tempCanvas.height = hoverCanvas.height;
+                const tempCtx = tempCanvas.getContext("2d");
+
+                tempCtx.fillStyle = maskColors[maskIndex];
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                tempCtx.globalCompositeOperation = "destination-in";
+                tempCtx.drawImage(selectedMask, 0, 0, tempCanvas.width, tempCanvas.height);
+                tempCtx.globalCompositeOperation = "source-over";
+
+                hoverCtx.drawImage(tempCanvas, 0, 0);
+            });
+        }
+
+        undoBtn.addEventListener("click", () => {
+            if (colorHistory.length > 0) {
+                const lastIndex = colorHistory.pop(); // Get last selected segment
+                delete maskColors[lastIndex]; // Remove its color
+                updateSelectedMasks();
+                if (colorHistory.length === 0) {
+                    undoBtn.disabled = true; // Disable button if no more actions
+                }
+            }
+        });
+
+        downloadBtn.addEventListener("click", () => {
+            const finalCanvas = document.createElement("canvas");
+            finalCanvas.width = maskCanvas.width;
+            finalCanvas.height = maskCanvas.height;
+            const finalCtx = finalCanvas.getContext("2d");
+
+            finalCtx.drawImage(originalImage, 0, 0, finalCanvas.width, finalCanvas.height);
+            finalCtx.drawImage(hoverCanvas, 0, 0);
+            
+            const link = document.createElement("a");
+            link.href = finalCanvas.toDataURL("image/png");
+            link.download = "segmented_image.png";
+            link.click();
+        });
+
+    </script>
+</body>
+</html>
